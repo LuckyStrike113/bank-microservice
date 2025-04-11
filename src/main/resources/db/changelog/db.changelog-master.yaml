@@ -1,0 +1,109 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Nazar Darvesh
+      changes:
+        - createTable:
+            tableName: limits
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: limit_sum
+                  type: decimal(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_datetime
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_currency_shortname
+                  type: varchar(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expense_category
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: account_from
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_to
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency_shortname
+                  type: varchar(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sum
+                  type: decimal(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expense_category
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: datetime
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_exceeded
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: fk_transaction_limit
+                    references: limits(id)
+        - createTable:
+            tableName: exchange_rates
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: currency_pair
+                  type: varchar(7)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: close_rate
+                  type: decimal(15,6)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date
+                  type: date
+                  constraints:
+                    nullable: false

@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bank_db
+    username: postgres
+    password: password
+  jpa:
+    open-in-view : false
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+server:
+  port: 8081
+logging:
+  level:
+    org.apache.coyote.http11: DEBUG
+    org.springframework.web: DEBUG
