@@ -1,0 +1,56 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001
+      author: Nazar Darvesh
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: transactions
+      changes:
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_from
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_to
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency_shortname
+                  type: varchar(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sum
+                  type: decimal(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expense_category
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: datetime
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_exceeded
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002
+      author: Nazar Darvesh
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: limits
+      changes:
+        - createTable:
+            tableName: limits
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: limit_sum
+                  type: decimal(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_datetime
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expense_category
+                  type: varchar(50)
+                  constraints:
+                    nullable: false

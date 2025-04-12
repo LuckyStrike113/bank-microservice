@@ -2,34 +2,42 @@ package com.bank.mapper;
 
 import com.bank.dto.TransactionRequest;
 import com.bank.dto.TransactionResponse;
+import com.bank.entity.Limit;
 import com.bank.entity.Transaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-/**
- * Mapper for converting between Transaction DTOs and entities.
- */
 @Mapper(componentModel = "spring")
 public interface TransactionMapper {
 
-    /**
-     * Converts a TransactionRequest DTO to a Transaction entity.
-     *
-     * @param request the transaction request DTO
-     * @return the Transaction entity with limitExceeded and limit fields ignored
-     */
+    @Mapping(source = "currencyShortname", target = "currencyShortname")
+    @Mapping(source = "expenseCategory", target = "expenseCategory")
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "limitExceeded", ignore = true)
-    @Mapping(target = "limit", ignore = true)
+    @Mapping(source = "accountFrom", target = "accountFrom")
+    @Mapping(source = "accountTo", target = "accountTo")
+    @Mapping(source = "sum", target = "sum")
+    @Mapping(source = "datetime", target = "datetime")
     Transaction toEntity(TransactionRequest request);
 
-    /**
-     * Converts a Transaction entity to a TransactionResponse DTO.
-     *
-     * @param transaction the Transaction entity
-     * @return the TransactionResponse DTO with limit details mapped
-     */
-    @Mapping(source = "limit.limitSum", target = "limitSum")
-    @Mapping(source = "limit.limitDatetime", target = "limitDatetime")
-    @Mapping(source = "limit.limitCurrencyShortname", target = "limitCurrencyShortname")
+    @Mapping(source = "currencyShortname", target = "currencyShortname")
+    @Mapping(source = "expenseCategory", target = "expenseCategory")
+    @Mapping(source = "accountFrom", target = "accountFrom")
+    @Mapping(source = "accountTo", target = "accountTo")
+    @Mapping(source = "sum", target = "sum")
+    @Mapping(source = "datetime", target = "datetime")
+    @Mapping(source = "limitExceeded", target = "limitExceeded")
     TransactionResponse toResponse(Transaction transaction);
+
+    @Mapping(source = "transaction.currencyShortname", target = "currencyShortname")
+    @Mapping(source = "transaction.expenseCategory", target = "expenseCategory")
+    @Mapping(source = "transaction.accountFrom", target = "accountFrom")
+    @Mapping(source = "transaction.accountTo", target = "accountTo")
+    @Mapping(source = "transaction.sum", target = "sum")
+    @Mapping(source = "transaction.datetime", target = "datetime")
+    @Mapping(source = "transaction.limitExceeded", target = "limitExceeded")
+    @Mapping(source = "limit.limitSum", target = "limitSum", defaultExpression = "java(new java.math.BigDecimal(\"1000.00\"))")
+    @Mapping(source = "limit.limitDatetime", target = "limitDatetime", defaultExpression = "java(transaction.getDatetime())")
+    @Mapping(target = "limitCurrencyShortname", constant = "USD")
+    TransactionResponse toResponse(Transaction transaction, Limit limit);
 }

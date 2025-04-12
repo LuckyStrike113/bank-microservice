@@ -1,8 +1,13 @@
 HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
 
-### STS ###
+### Maven ###
+target/
+*.log
+.mvn/wrapper/*
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+### Eclipse/STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -17,15 +22,9 @@ target/
 *.iml
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
 ### VS Code ###
 .vscode/
+
+### other ###
+.DS_Store
+*.class

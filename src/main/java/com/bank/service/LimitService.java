@@ -17,7 +17,6 @@ public class LimitService {
         Limit limit = new Limit();
         limit.setLimitSum(request.getLimitSum());
         limit.setLimitDatetime(OffsetDateTime.now());
-        limit.setLimitCurrencyShortname("USD");
         limit.setExpenseCategory(request.getExpenseCategory());
         limitRepository.save(limit);
     }

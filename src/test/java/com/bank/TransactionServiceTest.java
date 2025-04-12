@@ -2,7 +2,7 @@ package com.bank;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.bank.client.ExchangeRateClient;
 import com.bank.dto.TransactionRequest;
 import com.bank.entity.ExchangeRate;
+import com.bank.entity.ExpenseCategory;
 import com.bank.entity.Limit;
 import com.bank.entity.Transaction;
 import com.bank.mapper.TransactionMapper;
@@ -60,20 +61,19 @@ class TransactionServiceTest {
         request.setAccountTo("9999999999");
         request.setCurrencyShortname("KZT");
         request.setSum(BigDecimal.valueOf(10000));
-        request.setExpenseCategory("product");
+        request.setExpenseCategory(ExpenseCategory.PRODUCT);
         request.setDatetime(OffsetDateTime.now());
 
         Limit limit = new Limit();
         limit.setId(1L);
         limit.setLimitSum(BigDecimal.valueOf(1000));
         limit.setLimitDatetime(OffsetDateTime.now());
-        limit.setLimitCurrencyShortname("USD");
-        limit.setExpenseCategory("product");
+        limit.setExpenseCategory(ExpenseCategory.PRODUCT);
 
         ExchangeRate rate = new ExchangeRate();
         rate.setCurrencyPair("KZT/USD");
         rate.setCloseRate(BigDecimal.valueOf(0.0021));
-        rate.setDate(LocalDate.now());
+        rate.setRateDate(LocalDate.now());
 
         Transaction transaction = new Transaction();
         transaction.setAccountFrom(request.getAccountFrom());
@@ -83,12 +83,15 @@ class TransactionServiceTest {
         transaction.setExpenseCategory(request.getExpenseCategory());
         transaction.setDatetime(request.getDatetime());
 
-        when(limitRepository.findLatestByCategoryBeforeDate("product", request.getDatetime()))
+        when(limitRepository.findLatestByCategoryBeforeDate(ExpenseCategory.PRODUCT,
+            request.getDatetime()))
             .thenReturn(Optional.of(limit));
-        when(exchangeRateRepository.findLatestByPairAndDate("KZT/USD", LocalDate.now())).thenReturn(
-            Optional.of(rate));
+        when(
+            exchangeRateRepository.findTopByCurrencyPairAndRateDateLessThanEqualOrderByRateDateDesc(
+                "KZT/USD", LocalDate.now())).thenReturn(Optional.of(rate));
         when(exchangeRateClient.getRate("KZT")).thenReturn(BigDecimal.valueOf(0.0021));
-        when(transactionRepository.calculateSpentInMonth("product", request.getDatetime().getYear(),
+        when(transactionRepository.calculateSpentInMonth(
+            ExpenseCategory.PRODUCT, request.getDatetime().getYear(),
             request.getDatetime().getMonthValue(), request.getDatetime())).thenReturn(
             BigDecimal.ZERO);
         when(transactionMapper.toEntity(request)).thenReturn(transaction);
@@ -111,20 +114,19 @@ class TransactionServiceTest {
         request.setAccountTo("9999999999");
         request.setCurrencyShortname("USD");
         request.setSum(BigDecimal.valueOf(600));
-        request.setExpenseCategory("product");
+        request.setExpenseCategory(ExpenseCategory.PRODUCT);
         request.setDatetime(OffsetDateTime.parse("2022-01-03T10:00:00Z"));
 
         Limit limit = new Limit();
         limit.setId(1L);
         limit.setLimitSum(BigDecimal.valueOf(1000));
         limit.setLimitDatetime(OffsetDateTime.parse("2022-01-01T00:00:00Z"));
-        limit.setLimitCurrencyShortname("USD");
-        limit.setExpenseCategory("product");
+        limit.setExpenseCategory(ExpenseCategory.PRODUCT);
 
         ExchangeRate rate = new ExchangeRate();
         rate.setCurrencyPair("USD/USD");
         rate.setCloseRate(BigDecimal.ONE);
-        rate.setDate(LocalDate.parse("2022-01-03"));
+        rate.setRateDate(LocalDate.parse("2022-01-03"));
 
         Transaction transaction = new Transaction();
         transaction.setAccountFrom(request.getAccountFrom());
@@ -134,14 +136,16 @@ class TransactionServiceTest {
         transaction.setExpenseCategory(request.getExpenseCategory());
         transaction.setDatetime(request.getDatetime());
 
-        when(limitRepository.findLatestByCategoryBeforeDate("product", request.getDatetime()))
+        when(limitRepository.findLatestByCategoryBeforeDate(ExpenseCategory.PRODUCT,
+            request.getDatetime()))
             .thenReturn(Optional.of(limit));
-        when(exchangeRateRepository.findLatestByPairAndDate("USD/USD",
-            LocalDate.parse("2022-01-03")))
-            .thenReturn(Optional.of(rate));
+        when(
+            exchangeRateRepository.findTopByCurrencyPairAndRateDateLessThanEqualOrderByRateDateDesc(
+                "USD/USD", LocalDate.parse("2022-01-03"))).thenReturn(Optional.of(rate));
         when(exchangeRateClient.getRate("USD")).thenReturn(BigDecimal.ONE);
-        when(transactionRepository.calculateSpentInMonth("product", 2022, 1, request.getDatetime()))
-            .thenReturn(BigDecimal.valueOf(500));
+        when(transactionRepository.calculateSpentInMonth(
+            ExpenseCategory.PRODUCT, 2022, 1, request.getDatetime())).thenReturn(
+            BigDecimal.valueOf(500));
         when(transactionMapper.toEntity(request)).thenReturn(transaction);
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(
             invocation -> invocation.getArgument(0));

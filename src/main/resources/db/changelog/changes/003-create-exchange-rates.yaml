@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003
+      author: Nazar Darvesh
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: exchange_rates
+      changes:
+        - createTable:
+            tableName: exchange_rates
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: currency_pair
+                  type: varchar(7)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: close_rate
+                  type: decimal(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rate_date
+                  type: date
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: exchange_rates
+            columnNames: currency_pair, rate_date
+            constraintName: uk_exchange_rates_currency_pair_rate_date
