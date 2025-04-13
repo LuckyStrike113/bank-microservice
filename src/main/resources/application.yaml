@@ -11,6 +11,11 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 server:
   port: 8081
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 logging:
   level:
     org.apache.coyote.http11: DEBUG

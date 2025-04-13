@@ -6,38 +6,36 @@ import com.bank.entity.Limit;
 import com.bank.entity.Transaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = "spring")
+/**
+ * Mapper for converting between {@link Transaction}, {@link TransactionRequest}, and
+ * {@link TransactionResponse}.
+ */
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface TransactionMapper {
 
-    @Mapping(source = "currencyShortname", target = "currencyShortname")
-    @Mapping(source = "expenseCategory", target = "expenseCategory")
+    /**
+     * Converts a {@link TransactionRequest} to a {@link Transaction} entity.
+     *
+     * @param request the transaction request
+     * @return the transaction entity
+     */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "limitExceeded", ignore = true)
-    @Mapping(source = "accountFrom", target = "accountFrom")
-    @Mapping(source = "accountTo", target = "accountTo")
-    @Mapping(source = "sum", target = "sum")
-    @Mapping(source = "datetime", target = "datetime")
     Transaction toEntity(TransactionRequest request);
 
-    @Mapping(source = "currencyShortname", target = "currencyShortname")
-    @Mapping(source = "expenseCategory", target = "expenseCategory")
-    @Mapping(source = "accountFrom", target = "accountFrom")
-    @Mapping(source = "accountTo", target = "accountTo")
-    @Mapping(source = "sum", target = "sum")
-    @Mapping(source = "datetime", target = "datetime")
-    @Mapping(source = "limitExceeded", target = "limitExceeded")
-    TransactionResponse toResponse(Transaction transaction);
-
-    @Mapping(source = "transaction.currencyShortname", target = "currencyShortname")
-    @Mapping(source = "transaction.expenseCategory", target = "expenseCategory")
-    @Mapping(source = "transaction.accountFrom", target = "accountFrom")
-    @Mapping(source = "transaction.accountTo", target = "accountTo")
-    @Mapping(source = "transaction.sum", target = "sum")
-    @Mapping(source = "transaction.datetime", target = "datetime")
-    @Mapping(source = "transaction.limitExceeded", target = "limitExceeded")
-    @Mapping(source = "limit.limitSum", target = "limitSum", defaultExpression = "java(new java.math.BigDecimal(\"1000.00\"))")
-    @Mapping(source = "limit.limitDatetime", target = "limitDatetime", defaultExpression = "java(transaction.getDatetime())")
+    /**
+     * Converts a {@link Transaction} entity to a {@link TransactionResponse}, including limit
+     * details.
+     *
+     * @param transaction the transaction entity
+     * @param limit       the associated limit entity
+     * @return the transaction response
+     */
+    @Mapping(target = "limitSum", source = "limit.limitSum")
+    @Mapping(target = "limitDatetime", source = "limit.limitDatetime")
     @Mapping(target = "limitCurrencyShortname", constant = "USD")
+    @Mapping(target = "expenseCategory", source = "transaction.expenseCategory")
     TransactionResponse toResponse(Transaction transaction, Limit limit);
 }
