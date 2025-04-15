@@ -1,20 +1,16 @@
 package com.bank.service;
 
-import com.bank.client.ExchangeRateClient;
 import com.bank.dto.TransactionRequest;
 import com.bank.dto.TransactionResponse;
-import com.bank.entity.ExchangeRate;
 import com.bank.entity.ExpenseCategory;
 import com.bank.entity.Limit;
 import com.bank.entity.Transaction;
 import com.bank.mapper.TransactionMapper;
-import com.bank.repository.ExchangeRateRepository;
 import com.bank.repository.LimitRepository;
 import com.bank.repository.TransactionRepository;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +31,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final LimitRepository limitRepository;
-    private final ExchangeRateRepository exchangeRateRepository;
-    private final ExchangeRateClient exchangeRateClient;
+    private final ExchangeRateService exchangeRateService;
     private final TransactionMapper transactionMapper;
 
     /**
@@ -57,8 +52,8 @@ public class TransactionService {
                 request.getExpenseCategory(), request.getDatetime())
             .orElseGet(() -> createDefaultLimit(request.getExpenseCategory()));
 
-        BigDecimal rate = getExchangeRate(request.getCurrencyShortname(),
-            request.getDatetime().toLocalDate());
+        BigDecimal rate = exchangeRateService.getRate(
+            request.getCurrencyShortname(), request.getDatetime().toLocalDate());
         BigDecimal sumInUsd = request.getSum()
             .multiply(rate, new MathContext(4, RoundingMode.HALF_UP));
 
@@ -102,40 +97,6 @@ public class TransactionService {
         BigDecimal result = transactionRepository.calculateSpentInMonth(
             category.name(), date.getYear(), date.getMonthValue(), date);
         return result != null ? result : BigDecimal.ZERO;
-    }
-
-    /**
-     * Retrieves the exchange rate for a given currency on a specific date, caching it if not
-     * already present.
-     *
-     * @param currency the currency code (e.g., "KZT", "RUB")
-     * @param date     the date for which the rate is needed
-     * @return the exchange rate relative to USD
-     * @throws IllegalArgumentException if the exchange rate cannot be retrieved
-     */
-    private BigDecimal getExchangeRate(String currency, LocalDate date) {
-        if ("USD".equalsIgnoreCase(currency)) {
-            return BigDecimal.ONE;
-        }
-        String pair = currency + "/USD";
-        return exchangeRateRepository.findTopByCurrencyPairAndRateDateLessThanEqualOrderByRateDateDesc(
-                pair, date)
-            .map(ExchangeRate::getCloseRate)
-            .orElseGet(() -> {
-                log.info("Fetching exchange rate for pair: {} on date: {}", pair, date);
-                BigDecimal rate = exchangeRateClient.getRate(currency);
-                if (rate == null || rate.compareTo(BigDecimal.ZERO) <= 0) {
-                    log.error("Failed to retrieve exchange rate for {}", pair);
-                    throw new IllegalArgumentException(
-                        "Failed to retrieve exchange rate for " + pair);
-                }
-                ExchangeRate newRate = new ExchangeRate();
-                newRate.setCurrencyPair(pair);
-                newRate.setCloseRate(rate);
-                newRate.setRateDate(date);
-                exchangeRateRepository.save(newRate);
-                return rate;
-            });
     }
 
     /**

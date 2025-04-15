@@ -1,30 +1,29 @@
 package com.bank.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.bank.client.ExchangeRateClient;
 import com.bank.dto.TransactionRequest;
+import com.bank.dto.TransactionResponse;
 import com.bank.entity.ExpenseCategory;
+import com.bank.service.TransactionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Integration tests for {@link TransactionController}.
+ * Unit tests for {@link TransactionController}.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@SuppressWarnings("removal")
+@WebMvcTest(TransactionController.class)
 class TransactionControllerTest {
 
     @Autowired
@@ -34,7 +33,7 @@ class TransactionControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private ExchangeRateClient exchangeRateClient;
+    private TransactionService transactionService;
 
     /**
      * Tests successful transaction creation with valid data.
@@ -47,9 +46,22 @@ class TransactionControllerTest {
         request.setCurrencyShortname("KZT");
         request.setSum(new BigDecimal("10000.00"));
         request.setExpenseCategory(ExpenseCategory.PRODUCT);
-        request.setDatetime(OffsetDateTime.now().minusHours(1)); // Гарантируем прошлое время
+        request.setDatetime(OffsetDateTime.now().minusHours(1));
 
-        when(exchangeRateClient.getRate("KZT")).thenReturn(new BigDecimal("0.0021"));
+        TransactionResponse response = new TransactionResponse();
+        response.setAccountFrom("1234567890");
+        response.setAccountTo("0987654321");
+        response.setCurrencyShortname("KZT");
+        response.setSum(new BigDecimal("10000.00"));
+        response.setExpenseCategory(ExpenseCategory.PRODUCT);
+        response.setDatetime(request.getDatetime());
+        response.setLimitExceeded(false);
+        response.setLimitSum(new BigDecimal("1000.00"));
+        response.setLimitDatetime(OffsetDateTime.now().minusDays(1));
+        response.setLimitCurrencyShortname("USD");
+
+        when(transactionService.processTransaction(any(TransactionRequest.class)))
+            .thenReturn(response);
 
         mockMvc.perform(post("/api/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -80,7 +92,8 @@ class TransactionControllerTest {
         mockMvc.perform(post("/api/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.accountFrom").value("Account from must be a 10-digit number"));
     }
 
     /**
@@ -99,6 +112,7 @@ class TransactionControllerTest {
         mockMvc.perform(post("/api/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.datetime").value("Datetime must be in the past or present"));
     }
 }

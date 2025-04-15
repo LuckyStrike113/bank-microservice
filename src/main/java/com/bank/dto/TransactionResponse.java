@@ -3,12 +3,16 @@ package com.bank.dto;
 import com.bank.entity.ExpenseCategory;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 /**
  * DTO for returning transaction details to clients, including limit information.
  */
-@Data
+@Getter
+@Setter
+@RequiredArgsConstructor
 public class TransactionResponse {
 
     /**

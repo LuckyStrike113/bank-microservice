@@ -5,17 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-import com.bank.client.ExchangeRateClient;
 import com.bank.dto.TransactionRequest;
 import com.bank.dto.TransactionResponse;
 import com.bank.entity.ExpenseCategory;
 import com.bank.entity.Limit;
 import com.bank.entity.Transaction;
 import com.bank.mapper.TransactionMapper;
-import com.bank.repository.ExchangeRateRepository;
 import com.bank.repository.LimitRepository;
 import com.bank.repository.TransactionRepository;
 import java.math.BigDecimal;
@@ -38,10 +35,7 @@ class TransactionServiceTest {
     private LimitRepository limitRepository;
 
     @Mock
-    private ExchangeRateRepository exchangeRateRepository;
-
-    @Mock
-    private ExchangeRateClient exchangeRateClient;
+    private ExchangeRateService exchangeRateService;
 
     @Mock
     private TransactionMapper transactionMapper;
@@ -97,11 +91,8 @@ class TransactionServiceTest {
         when(limitRepository.findLatestByCategoryBeforeDate(any(ExpenseCategory.class),
             any(OffsetDateTime.class)))
             .thenReturn(Optional.of(limit));
-        when(
-            exchangeRateRepository.findTopByCurrencyPairAndRateDateLessThanEqualOrderByRateDateDesc(
-                anyString(), any()))
-            .thenReturn(Optional.empty());
-        when(exchangeRateClient.getRate("KZT")).thenReturn(new BigDecimal("0.0021"));
+        when(exchangeRateService.getRate("KZT", request.getDatetime().toLocalDate()))
+            .thenReturn(new BigDecimal("0.0021"));
         when(transactionMapper.toEntity(any(TransactionRequest.class))).thenReturn(transaction);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
         when(transactionMapper.toResponse(any(Transaction.class), any(Limit.class))).thenReturn(
@@ -122,11 +113,8 @@ class TransactionServiceTest {
         when(limitRepository.findLatestByCategoryBeforeDate(any(ExpenseCategory.class),
             any(OffsetDateTime.class)))
             .thenReturn(Optional.empty());
-        when(
-            exchangeRateRepository.findTopByCurrencyPairAndRateDateLessThanEqualOrderByRateDateDesc(
-                anyString(), any()))
-            .thenReturn(Optional.empty());
-        when(exchangeRateClient.getRate("KZT")).thenReturn(new BigDecimal("0.0021"));
+        when(exchangeRateService.getRate("KZT", request.getDatetime().toLocalDate()))
+            .thenReturn(new BigDecimal("0.0021"));
         when(transactionMapper.toEntity(any(TransactionRequest.class))).thenReturn(transaction);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
         when(limitRepository.save(any(Limit.class))).thenReturn(limit);
@@ -144,11 +132,8 @@ class TransactionServiceTest {
         when(limitRepository.findLatestByCategoryBeforeDate(any(ExpenseCategory.class),
             any(OffsetDateTime.class)))
             .thenReturn(Optional.of(limit));
-        when(
-            exchangeRateRepository.findTopByCurrencyPairAndRateDateLessThanEqualOrderByRateDateDesc(
-                anyString(), any()))
-            .thenReturn(Optional.empty());
-        when(exchangeRateClient.getRate("KZT")).thenReturn(null);
+        when(exchangeRateService.getRate("KZT", request.getDatetime().toLocalDate()))
+            .thenThrow(new IllegalArgumentException("No rate for KZT/USD"));
 
         assertThrows(IllegalArgumentException.class,
             () -> transactionService.processTransaction(request));

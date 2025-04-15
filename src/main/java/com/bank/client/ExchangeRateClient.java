@@ -1,48 +1,67 @@
 package com.bank.client;
 
+import com.bank.dto.ExchangeRateResponse;
+import com.bank.exception.ExchangeRateApiException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Client for retrieving exchange rates from an external API (Open Exchange Rates).
+ * Client for retrieving exchange rates from Open Exchange Rates API.
  */
 @Component
+@RequiredArgsConstructor
 public class ExchangeRateClient {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    @Value("${exchange-rate.api.url:https://openexchangerates.org/api}")
+    private String baseUrl;
+
+    @Value("${exchange-rate.api.key}")
+    private String apiKey;
 
     /**
-     * Retrieves the exchange rate for a given currency relative to USD.
+     * Fetches historical exchange rates for a list of currencies relative to USD.
      *
-     * @param currency the currency code (e.g., "KZT", "EUR")
-     * @return the exchange rate (e.g., KZT/USD rate)
-     * @throws RuntimeException if the API request fails or the rate is not found
+     * @param currencies the list of currency codes (e.g., ["KZT", "RUB"])
+     * @param date       the date for the rates
+     * @return a map of currency codes to their exchange rates (currency/USD)
+     * @throws ExchangeRateApiException if the API request fails or returns invalid data
      */
-    public BigDecimal getRate(String currency) {
-        if (currency.equals("USD")) {
-            return BigDecimal.ONE; // Если валюта USD, курс 1
-        }
-
-        String apiKey = "a663ddf94b9945398a68ecaa9d359361"; // Заменить на реальный ключ
-        String baseUrl = "https://openexchangerates.org/api/latest.json";
-        String url = baseUrl + "?app_id=" + apiKey;
-
+    public Map<String, BigDecimal> getHistoricalRates(List<String> currencies, LocalDate date) {
+        String symbols = String.join(",", currencies);
+        String url =
+            baseUrl + "/historical/" + date + ".json?app_id=" + apiKey + "&symbols=" + symbols;
         try {
-            ExchangeRateResponse response = restTemplate.getForObject(url, ExchangeRateResponse.class);
+            ExchangeRateResponse response = restTemplate.getForObject(url,
+                ExchangeRateResponse.class);
             if (response.getRates() == null) {
-                throw new RuntimeException("Failed to fetch exchange rates");
+                throw new ExchangeRateApiException(
+                    "Failed to fetch exchange rates from API for " + date + ". Response rates are empty.");
             }
-            BigDecimal rateToUsd = response.getRates().get(currency);
-            if (rateToUsd == null) {
-                throw new RuntimeException("Rate for " + currency + " not found");
+            Map<String, BigDecimal> rates = new HashMap<>();
+            for (String currency : currencies) {
+                BigDecimal rateToUsd = response.getRates().get(currency);
+                if (rateToUsd == null || rateToUsd.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new ExchangeRateApiException(
+                        "Invalid exchange rate for " + currency + " on " + date + ": " + rateToUsd);
+                }
+                // Инвертируем: валюта/USD = 1 / (USD/валюта)
+                rates.put(currency, BigDecimal.ONE.divide(rateToUsd, 4, RoundingMode.HALF_UP));
             }
-            // Инвертируем курс: KZT/USD = 1 / (USD/KZT)
-            return BigDecimal.ONE.divide(rateToUsd, 6, RoundingMode.HALF_UP);
+            return rates;
         } catch (Exception e) {
-            throw new RuntimeException(
-                "Error fetching rate for " + currency + ": " + e.getMessage());
+            throw new ExchangeRateApiException(
+                "Failed to fetch exchange rates from API for " + date +
+                ". Please check API key or try again later.", e);
         }
     }
 }

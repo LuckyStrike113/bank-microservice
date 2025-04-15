@@ -1,8 +1,10 @@
 package com.bank.config;
 
+import com.bank.exception.ExchangeRateApiException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,5 +58,19 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", ex.getMessage());
         return ResponseEntity.badRequest().body(errors);
+    }
+
+    /**
+     * Handles exchange rate API failures.
+     *
+     * @param ex the exchange rate API exception
+     * @return a response with error details
+     */
+    @ExceptionHandler(ExchangeRateApiException.class)
+    public ResponseEntity<Map<String, String>> handleExchangeRateApiException(
+        ExchangeRateApiException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errors);
     }
 }

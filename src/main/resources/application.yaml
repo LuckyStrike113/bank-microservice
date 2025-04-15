@@ -4,6 +4,12 @@ spring:
     username: postgres
     password: password
   jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
     open-in-view : false
     hibernate:
       ddl-auto: none
@@ -20,3 +26,8 @@ logging:
   level:
     org.apache.coyote.http11: DEBUG
     org.springframework.web: DEBUG
+    com.bank.service: DEBUG
+exchange-rate:
+  api:
+    url: https://openexchangerates.org/api
+    key: a663ddf94b9945398a68ecaa9d359361

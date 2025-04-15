@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004
+      author: Nazar Darvesh
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            indexExists:
+              indexName: idx_exchange_rates_currency_pair_rate_date
+      changes:
+        - createIndex:
+            indexName: idx_exchange_rates_currency_pair_rate_date
+            tableName: exchange_rates
+            columns:
+              - column:
+                  name: currency_pair
+              - column:
+                  name: rate_date
